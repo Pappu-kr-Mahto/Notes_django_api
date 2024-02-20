@@ -101,6 +101,7 @@ def allNotes(request):
         return Response(notes)
     except Exception as e:
         return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 @api_view(['GET','POST'])
 @permission_classes([IsAuthenticated])
 def notesById(request,id):
