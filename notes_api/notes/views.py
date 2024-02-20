@@ -74,63 +74,77 @@ def login(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def crateNote(request):
-    user=User.objects.get(username=request.user)
-    print(user)
-    version=[{"note":request.data['note'],"updated_at":datetime.datetime.now()}]
-    data = NotesTable.objects.create(userId=user,note=request.data['note'],versions=version)
-    return Response({"success":"notes created successfully"},status=status.HTTP_200_OK)
+    try:
+        user=User.objects.get(username=request.user)
+        print(user)
+        version=[{"note":request.data['note'],"updated_at":datetime.datetime.now()}]
+        data = NotesTable.objects.create(userId=user,note=request.data['note'],versions=version)
+        return Response({"success":"notes created successfully"},status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def allNotes(request):
-    notes=NotesTable.objects.all().values()
-    # print(notes)
-    # serializer = NotesSerializer(data=notes,partial=True)
+    try:
+        notes=NotesTable.objects.all().values()
+        # print(notes)
+        # serializer = NotesSerializer(data=notes,partial=True)
 
-    # if serializer.is_valid():
-    #     print(serializer.data)
-    # else:
-    #     print(serializer.errors)
-        
-    # print(serializer.data)
-    return Response(notes)
-
+        # if serializer.is_valid():
+        #     print(serializer.data)
+        # else:
+        #     print(serializer.errors)
+            
+        # print(serializer.data)
+        return Response(notes)
+    except Exception as e:
+        return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 @api_view(['GET','POST'])
 @permission_classes([IsAuthenticated])
 def notesById(request,id):
-    if request.method == "GET":
-        data = NotesTable.objects.filter(id=id).values()
-        return Response(data)
 
+    if request.method == "GET":
+        try:
+            data = NotesTable.objects.filter(id=id).values()
+            return Response(data,status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     if request.method == "POST":
-        print(request.data)
-        obj=NotesTable.objects.get(id=id)
-        obj.note=request.data['note']
-        versions=eval(obj.versions)
-        versions.insert(0,{"note":request.data['note'],"updated_at":datetime.datetime.now()})
-        obj.versions=versions
-        obj.save()
-        return Response({"success":"updated successfully"},status=status.HTTP_200_OK)
-    
+        try:
+            obj=NotesTable.objects.get(id=id)
+            obj.note=request.data['note']
+            versions=eval(obj.versions)
+            versions.insert(0,{"note":request.data['note'],"updated_at":datetime.datetime.now()})
+            obj.versions=versions
+            obj.save()
+            return Response({"success":"updated successfully"},status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def shareNotes(request):
-    print(request.data)
-    print(request.user)
-    note=NotesTable.objects.filter(id=request.data['noteId']).first()
-    users=eval(request.data['usernames'])
-    for usr in users:
-        user=User.objects.get(username=usr)
-        version=[{"note":note.note,"updated_at":datetime.datetime.now()}]
-        print(version)
-        data = NotesTable.objects.create(userId=user,note=note.note,versions=version)
-    return Response(request.data)
-
+    try:
+        # print(request.data)
+        note=NotesTable.objects.filter(id=request.data['noteId']).first()
+        users=eval(request.data['usernames'])
+        for usr in users:
+            user=User.objects.get(username=usr)
+            version=[{"note":note.note,"updated_at":datetime.datetime.now()}]
+            print(version)
+            data = NotesTable.objects.create(userId=user,note=note.note,versions=version)
+        return Response(request.data)
+    except Exception as e:
+        return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def notesVersion(request,id):
-    note=NotesTable.objects.filter(id=id).values("versions")
-    print(note)
-    return Response(note)
+    try:
+        note=NotesTable.objects.filter(id=id).values("versions")
+        return Response(note)
+    except Exception as e:
+        return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
