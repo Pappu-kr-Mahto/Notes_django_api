@@ -22,3 +22,15 @@ class NotesSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotesTable
         fields = '__all__'
+
+class IdSerializer(serializers.Serializer):
+    id=serializers.IntegerField()
+
+    def validate_id(self , value):
+        if not isinstance(value,int):
+            raise serializers.ValidationError({"error":"Note id must be an Integer"})
+        else:
+            if NotesTable.objects.filter(id =value).exists():
+                return value
+            else:
+                raise serializers.ValidationError({"error":"Notes for the corresponding id is not available"})

@@ -12,7 +12,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework import status
 
-import datetime
+from datetime import datetime 
+
 # Create your views here.
 
 def home(request):
@@ -77,7 +78,7 @@ def crateNote(request):
     try:
         user=User.objects.get(username=request.user)
         print(user)
-        version=[{"note":request.data['note'],"updated_at":datetime.datetime.now()}]
+        version=[{"note":request.data['note'],"updated_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]
         data = NotesTable.objects.create(userId=user,note=request.data['note'],versions=version)
         return Response({"success":"notes created successfully"},status=status.HTTP_200_OK)
     except Exception as e:
@@ -108,17 +109,22 @@ def notesById(request,id):
 
     if request.method == "GET":
         try:
-            data = NotesTable.objects.filter(id=id).values()
-            return Response(data,status=status.HTTP_200_OK)
+            serializer=IdSerializer(data={"id":id})
+            if serializer.is_valid():
+                data = NotesTable.objects.filter(id=id).values()
+                return Response(data,status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
-            return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error":"Internal Server Error"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     if request.method == "POST":
         try:
             obj=NotesTable.objects.get(id=id)
             obj.note=request.data['note']
             versions=eval(obj.versions)
-            versions.insert(0,{"note":request.data['note'],"updated_at":datetime.datetime.now()})
+            versions.insert(0,{"note":request.data['note'],"updated_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
             obj.versions=versions
             obj.save()
             return Response({"success":"updated successfully"},status=status.HTTP_200_OK)
@@ -134,7 +140,7 @@ def shareNotes(request):
         users=eval(request.data['usernames'])
         for usr in users:
             user=User.objects.get(username=usr)
-            version=[{"note":note.note,"updated_at":datetime.datetime.now()}]
+            version=[{"note":note.note,"updated_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]
             print(version)
             data = NotesTable.objects.create(userId=user,note=note.note,versions=version)
         return Response(request.data)
@@ -145,7 +151,12 @@ def shareNotes(request):
 @permission_classes([IsAuthenticated])
 def notesVersion(request,id):
     try:
-        note=NotesTable.objects.filter(id=id).values("versions")
-        return Response(note)
+        serializer=IdSerializer(data={"id":id})
+        if serializer.is_valid():
+            note=NotesTable.objects.filter(id=serializer.validated_data['id']).values("versions")
+            return Response(note,status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        
     except Exception as e:
-        return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error":"Internal Server Error"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
