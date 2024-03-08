@@ -17,7 +17,7 @@ from datetime import datetime
 # Create your views here.
 
 def home(request):
-    return HttpResponse("Welcome home")
+    return HttpResponse("<h1>Server is Live</h1><h2>Test all the API's endpoints given in readme file using thunderclient,postman or any other api testing tool.</h2>")
 
 
 @api_view(['POST'])
@@ -26,7 +26,7 @@ def signup(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response(request.data,status=status.HTTP_201_CREATED)
+        return Response({"msg":"Account Created successfully","username":request.data['username'],"email":request.data['email']},status=status.HTTP_201_CREATED)
     else:
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
@@ -143,7 +143,7 @@ def shareNotes(request):
             version=[{"note":note.note,"updated_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]
             print(version)
             data = NotesTable.objects.create(userId=user,note=note.note,versions=version)
-        return Response(request.data)
+        return Response({"msg":"Note infromation shared successfully","note id":request.data['noteId'],"usernames":request.data['usernames']})
     except Exception as e:
         return Response(e,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
